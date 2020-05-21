@@ -1,0 +1,30 @@
+var mqtt = require('mqtt')
+var client  = mqtt.connect('mqtt://mqtt.eclipse.org');
+
+var ThunderboardReact = require('node-thunderboard-react');
+var thunder = new ThunderboardReact();
+
+thunder.init((error) => {
+  thunder.startDiscovery((device) => {
+    console.log('- Found ' + device.localName);
+    thunder.stopDiscovery();
+    device.connect((error) => {
+      console.log(' -Connected ' + device.localName);
+      setInterval(() => {getEnvironmentalSensing(device);}, 5000)
+    });
+  });
+});
+
+// Get the sensored data
+function getEnvironmentalSensing(device) {
+  device.getEnvironmentalSensing((error, res) => {
+    client.publish('dse-i2400/Natasha/', JSON.stringify({...res,}))
+    console.log('- Sensored data:');
+    console.log('  - Humidity    : ' + res.humidity + ' %');
+    console.log('  - Temperature : ' + res.temperature + ' °C');
+    console.log('  - UV Index    : ' + res.uvIndex);
+    console.log('  - Pressure    : ' + res.pressure + ' mbar');
+    console.log('  - Light       : ' + res.light + ' lx');
+    console.log('  - Sound       : ' + res.sound + ' dB');
+  });
+}

@@ -1,0 +1,53 @@
+var mqtt = require('mqtt');
+var client  = mqtt.connect('mqtt://raspberrypi.local.:1883');
+
+var ThunderboardReact = require('node-thunderboard-react');
+var thunder = new ThunderboardReact();
+
+client.on('connect', () => {
+    client.subscribe('dse-i2400/Natasha/living-room/#');
+})
+  
+//for subscribing; topic and reading are from publish()
+client.on('message', (topic, reading) => {
+    console.log('received reading %s %s', topic, reading)
+})
+
+thunder.init((error) => {
+  thunder.startDiscovery((device,client) => {
+    console.log('- Found ' + device.localName);
+    thunder.stopDiscovery();
+    device.connect((error) => {
+      console.log(' -Connected ' + device.localName);
+      setInterval(() => {getEnvironmentalSensing(device)}, 5000)
+    });
+  });
+});
+
+// Get the sensored data
+function getEnvironmentalSensing(device) {
+  device.getEnvironmentalSensing((error, res) => {
+    console.log('---------- Sensored data------------------:');
+    client.publish('dse-i2400/Natasha/living-room/humidity', res.humidity.toString()+' %')
+    client.publish('dse-i2400/Natasha/living-room/temperature', res.temperature.toString() + ' °C')
+    client.publish('dse-i2400/Natasha/living-room/uvIndex', res.uvIndex.toString())
+    client.publish('dse-i2400/Natasha/living-room/pressure', res.pressure.toString() + ' mbar')
+    client.publish('dse-i2400/Natasha/living-room/light', res.light.toString() + ' lx')
+    client.publish('dse-i2400/Natasha/living-room/sound', res.sound.toString() + ' dB')
+    client.publish('dse-i2400/Natasha/living-room/latitude', '40.6519808')
+    client.publish('dse-i2400/Natasha/living-room/longitude', '-74.0163584')
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
